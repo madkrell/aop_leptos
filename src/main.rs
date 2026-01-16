@@ -38,9 +38,29 @@ async fn main() {
         .with_secure(std::env::var("PRODUCTION").is_ok())
         .with_same_site(tower_sessions::cookie::SameSite::Lax);
 
-    // Leptos config - use Cargo.toml for configuration
-    let conf = get_configuration(Some("Cargo.toml")).unwrap();
-    let leptos_options = conf.leptos_options;
+    // Leptos config - try Cargo.toml first, fall back to environment/defaults for packaged app
+    let leptos_options = match get_configuration(Some("Cargo.toml")) {
+        Ok(conf) => conf.leptos_options,
+        Err(_) => {
+            // Running as packaged app - build config from env vars
+            use leptos::config::LeptosOptions;
+            use std::net::SocketAddr;
+
+            let site_root = std::env::var("LEPTOS_SITE_ROOT").unwrap_or_else(|_| "site".into());
+            let site_addr: SocketAddr = std::env::var("LEPTOS_SITE_ADDR")
+                .unwrap_or_else(|_| "127.0.0.1:3000".into())
+                .parse()
+                .expect("Invalid LEPTOS_SITE_ADDR");
+
+            LeptosOptions::builder()
+                .output_name("aop")
+                .site_root(site_root)
+                .site_pkg_dir("pkg")
+                .site_addr(site_addr)
+                .reload_port(3001)
+                .build()
+        }
+    };
     let addr = leptos_options.site_addr;
     let routes = generate_route_list(App);
 
