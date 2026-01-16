@@ -5,3 +5,9 @@
 *.db-*
 .DS_Store
 .claude/
+
+# macOS app bundle (local build artifact)
+ArtistOilPaints.app/
+
+# App icon (local asset)
+aop.png
