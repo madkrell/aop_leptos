@@ -108,7 +108,7 @@ bin-features = ["ssr"]
 lib-features = ["hydrate"]
 
 [profile.release]
-lto = "thin"
+lto = true
 opt-level = 3
 
 [profile.wasm-release]
