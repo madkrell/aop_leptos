@@ -287,8 +287,7 @@ pub async fn test_paint_mix(
 ) -> Result<String, ServerFnError> {
     use crate::db;
     use crate::server_fns::get_current_user;
-    use crate::services::paint_mixing::get_default_t_matrix;
-    use crate::services::lhtss::LHTSS;
+    use crate::services::optimization::kubelka_munk_mix;
     use ndarray::Array1;
 
     let user = get_current_user()
@@ -322,6 +321,14 @@ pub async fn test_paint_mix(
     // Get paint data
     let all_colors = db::get_paint_colors(&state.db, brand).await;
 
+    // For a single paint, return its database hex value directly
+    if paints.len() == 1 {
+        let paint_name = &paints[0];
+        if let Some(color) = all_colors.iter().find(|c| &c._id == paint_name) {
+            return Ok(color.d65_10deg_hex.clone().unwrap_or_else(|| "#808080".to_string()));
+        }
+    }
+
     // Get spectral data for requested paints
     let paint_reflectances: Vec<Array1<f64>> = paints
         .iter()
@@ -338,36 +345,53 @@ pub async fn test_paint_mix(
         return Err(ServerFnError::new("Could not find all paint data"));
     }
 
-    // Mix the reflectances
-    let lhtss = LHTSS::new(get_default_t_matrix());
-    let mixed = lhtss.mix_reflectance(&paint_reflectances, &weights);
+    // Mix the reflectances using Kubelka-Munk theory
+    let mixed = kubelka_munk_mix(&paint_reflectances, &weights);
 
-    // Convert to RGB hex
-    let xyz = lhtss.reflectance_to_xyz(&mixed);
-    let lab = lhtss.xyz_to_lab(&xyz);
+    // Convert mixed reflectance to XYZ using CIE 1931 2-degree observer and D65 illuminant
+    // Wavelengths: 400nm to 700nm in 10nm steps (31 values)
+    // These are the standard color matching functions scaled by D65 illuminant
+    let cmf_x: [f64; 31] = [
+        0.0143, 0.0435, 0.1344, 0.2839, 0.3483, 0.3362, 0.2908, 0.1954, 0.0956,
+        0.0320, 0.0049, 0.0093, 0.0633, 0.1655, 0.2904, 0.4334, 0.5945, 0.7621,
+        0.9163, 1.0263, 1.0622, 1.0026, 0.8544, 0.6424, 0.4479, 0.2835, 0.1649,
+        0.0874, 0.0468, 0.0227, 0.0114,
+    ];
+    let cmf_y: [f64; 31] = [
+        0.0004, 0.0012, 0.0040, 0.0116, 0.0230, 0.0380, 0.0600, 0.0910, 0.1390,
+        0.2080, 0.3230, 0.5030, 0.7100, 0.8620, 0.9540, 0.9950, 0.9950, 0.9520,
+        0.8700, 0.7570, 0.6310, 0.5030, 0.3810, 0.2650, 0.1750, 0.1070, 0.0610,
+        0.0320, 0.0170, 0.0082, 0.0041,
+    ];
+    let cmf_z: [f64; 31] = [
+        0.0679, 0.2074, 0.6456, 1.3856, 1.7471, 1.7721, 1.6692, 1.2876, 0.8130,
+        0.4652, 0.2720, 0.1582, 0.0782, 0.0422, 0.0203, 0.0087, 0.0039, 0.0021,
+        0.0017, 0.0011, 0.0008, 0.0003, 0.0002, 0.0000, 0.0000, 0.0000, 0.0000,
+        0.0000, 0.0000, 0.0000, 0.0000,
+    ];
 
-    // Simple Lab to sRGB conversion (approximate)
-    let y = (lab[0] + 16.0) / 116.0;
-    let x = lab[1] / 500.0 + y;
-    let z = y - lab[2] / 200.0;
+    // Compute XYZ by integrating reflectance * CMF
+    let mut x = 0.0;
+    let mut y = 0.0;
+    let mut z = 0.0;
+    for i in 0..31 {
+        x += mixed[i] * cmf_x[i];
+        y += mixed[i] * cmf_y[i];
+        z += mixed[i] * cmf_z[i];
+    }
 
-    let f_inv = |t: f64| {
-        if t > 0.206893 {
-            t.powi(3)
-        } else {
-            (t - 16.0 / 116.0) / 7.787
-        }
-    };
+    // Normalize to D65 white point (sum of Y should equal 1 for perfect white)
+    let y_sum: f64 = cmf_y.iter().sum();
+    x /= y_sum;
+    y /= y_sum;
+    z /= y_sum;
 
-    let xr = f_inv(x) * 0.95047;
-    let yr = f_inv(y);
-    let zr = f_inv(z) * 1.08883;
+    // XYZ to linear sRGB (D65 reference)
+    let r_lin = 3.2404542 * x - 1.5371385 * y - 0.4985314 * z;
+    let g_lin = -0.9692660 * x + 1.8760108 * y + 0.0415560 * z;
+    let b_lin = 0.0556434 * x - 0.2040259 * y + 1.0572252 * z;
 
-    // XYZ to sRGB
-    let r = 3.2406 * xr - 1.5372 * yr - 0.4986 * zr;
-    let g = -0.9689 * xr + 1.8758 * yr + 0.0415 * zr;
-    let b = 0.0557 * xr - 0.2040 * yr + 1.0570 * zr;
-
+    // Apply sRGB gamma correction
     let gamma = |c: f64| {
         let c = c.max(0.0).min(1.0);
         if c <= 0.0031308 {
@@ -377,9 +401,9 @@ pub async fn test_paint_mix(
         }
     };
 
-    let r = (gamma(r) * 255.0).round() as u8;
-    let g = (gamma(g) * 255.0).round() as u8;
-    let b = (gamma(b) * 255.0).round() as u8;
+    let r = (gamma(r_lin) * 255.0).round() as u8;
+    let g = (gamma(g_lin) * 255.0).round() as u8;
+    let b = (gamma(b_lin) * 255.0).round() as u8;
 
     Ok(format!("#{:02x}{:02x}{:02x}", r, g, b))
 }
