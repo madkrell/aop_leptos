@@ -126,31 +126,139 @@ button.btn {
 /* Home Page */
 .home-page {
   .hero {
+    position: relative;
     text-align: center;
-    padding: 4rem 2rem;
+    padding: 4rem 2rem 8rem;
+    background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 50%, #3182ce 100%);
+    min-height: 400px;
+    overflow: hidden;
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+    }
 
     h1 {
       font-size: 3rem;
       margin-bottom: 1rem;
-      color: var(--text);
+      color: white;
+      letter-spacing: 0.05em;
+      text-shadow:
+        1px 1px 0 rgba(0, 0, 0, 0.2),
+        2px 2px 0 rgba(0, 0, 0, 0.2),
+        3px 3px 0 rgba(0, 0, 0, 0.15),
+        4px 4px 0 rgba(0, 0, 0, 0.15),
+        5px 5px 0 rgba(0, 0, 0, 0.1),
+        6px 6px 0 rgba(0, 0, 0, 0.1),
+        7px 7px 0 rgba(0, 0, 0, 0.05),
+        8px 8px 0 rgba(0, 0, 0, 0.05),
+        10px 15px 20px rgba(0, 0, 0, 0.4);
+      transition: text-shadow 0.3s, transform 0.3s;
+
+      &:hover {
+        transform: scale(1.02);
+        text-shadow:
+          1px -1px 0 rgba(0, 0, 0, 0.2),
+          2px -2px 0 rgba(0, 0, 0, 0.2),
+          3px -3px 0 rgba(0, 0, 0, 0.15),
+          4px -4px 0 rgba(0, 0, 0, 0.15),
+          5px -5px 0 rgba(0, 0, 0, 0.1),
+          6px -6px 0 rgba(0, 0, 0, 0.1),
+          7px -7px 0 rgba(0, 0, 0, 0.05),
+          8px -8px 0 rgba(0, 0, 0, 0.05),
+          10px -15px 25px rgba(0, 0, 0, 0.5);
+      }
     }
 
     .subtitle {
       font-size: 1.5rem;
-      color: var(--primary);
+      color: rgba(255, 255, 255, 0.9);
       margin-bottom: 1rem;
     }
 
     .description {
       max-width: 600px;
       margin: 0 auto 2rem;
-      color: var(--text-muted);
+      color: rgba(255, 255, 255, 0.8);
     }
 
     .cta-buttons {
       display: flex;
       gap: 1rem;
       justify-content: center;
+
+      .btn-primary {
+        background: white;
+        color: #1e3a5f;
+        &:hover {
+          background: #f0f0f0;
+        }
+      }
+
+      .btn-secondary {
+        background: transparent;
+        border: 2px solid white;
+        color: white;
+        &:hover {
+          background: rgba(255, 255, 255, 0.1);
+        }
+      }
+    }
+
+    // Waves
+    .waves {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: 100px;
+      min-height: 100px;
+      max-height: 150px;
+    }
+
+    .waves-svg {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      margin-bottom: -7px; // Hide gap
+    }
+
+    .wave {
+      animation: wave-move 25s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite;
+    }
+
+    .wave-1 {
+      fill: rgba(255, 255, 255, 0.7);
+      animation-delay: -2s;
+      animation-duration: 7s;
+    }
+
+    .wave-2 {
+      fill: rgba(255, 255, 255, 0.5);
+      animation-delay: -3s;
+      animation-duration: 10s;
+    }
+
+    .wave-3 {
+      fill: rgba(255, 255, 255, 0.3);
+      animation-delay: -4s;
+      animation-duration: 13s;
+    }
+
+    .wave-4 {
+      fill: var(--bg);
+      animation-delay: -5s;
+      animation-duration: 20s;
+    }
+
+    @keyframes wave-move {
+      0% {
+        transform: translate3d(-90px, 0, 0);
+      }
+      100% {
+        transform: translate3d(85px, 0, 0);
+      }
     }
   }
 
@@ -161,11 +269,21 @@ button.btn {
     padding: 2rem;
 
     .feature {
-      background: var(--card-bg);
+      background: #f1f5f9;
       padding: 2rem;
       border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      box-shadow:
+        0 4px 6px rgba(0, 0, 0, 0.1),
+        0 10px 20px rgba(0, 0, 0, 0.08);
       text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow:
+          0 8px 12px rgba(0, 0, 0, 0.12),
+          0 16px 32px rgba(0, 0, 0, 0.1);
+      }
 
       h3 {
         color: var(--primary);
@@ -175,6 +293,63 @@ button.btn {
       p {
         color: var(--text-muted);
       }
+    }
+  }
+
+  // Footer wave section - inverted waves at bottom
+  .footer-wave {
+    position: relative;
+    background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 50%, #3182ce 100%);
+    min-height: 150px;
+
+    .waves-inverted {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: 100px;
+      transform: rotate(180deg);
+
+      .waves-svg {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+
+      .wave {
+        animation: wave-move 25s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite;
+      }
+
+      .wave-1 {
+        fill: rgba(255, 255, 255, 0.7);
+        animation-delay: -2s;
+        animation-duration: 7s;
+      }
+
+      .wave-2 {
+        fill: rgba(255, 255, 255, 0.5);
+        animation-delay: -3s;
+        animation-duration: 10s;
+      }
+
+      .wave-3 {
+        fill: rgba(255, 255, 255, 0.3);
+        animation-delay: -4s;
+        animation-duration: 13s;
+      }
+
+      .wave-4 {
+        fill: var(--bg);
+        animation-delay: -5s;
+        animation-duration: 20s;
+      }
+    }
+
+    .footer-content {
+      position: relative;
+      z-index: 1;
+      padding: 6rem 2rem 2rem;
     }
   }
 }
@@ -1058,10 +1233,30 @@ form button[type="submit"] {
   }
 
   .home-page .hero {
+    padding: 3rem 1.5rem 6rem;
+    min-height: 350px;
+
     h1 { font-size: 2rem; }
     .subtitle { font-size: 1.25rem; }
     .cta-buttons {
       flex-direction: column;
+    }
+
+    .waves {
+      height: 60px;
+      min-height: 60px;
+    }
+  }
+
+  .home-page .footer-wave {
+    min-height: 100px;
+
+    .waves-inverted {
+      height: 60px;
+    }
+
+    .footer-content {
+      padding: 4rem 1.5rem 1.5rem;
     }
   }
 
