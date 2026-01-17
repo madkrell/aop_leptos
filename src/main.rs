@@ -46,8 +46,10 @@ async fn main() {
         .with_same_site(tower_sessions::cookie::SameSite::Lax);
 
     // Leptos config - use None to let Leptos find config automatically (same as ntb project)
+    eprintln!("Loading Leptos configuration...");
     let conf = get_configuration(None).expect("Failed to load Leptos configuration");
     let leptos_options = conf.leptos_options;
+    eprintln!("Leptos configuration loaded successfully");
 
     // Debug: Log site configuration
     eprintln!("Leptos config:");
