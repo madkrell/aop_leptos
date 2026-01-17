@@ -13,7 +13,7 @@ async fn main() {
 
     // Initialize database
     let db = aop::db::create_pool(
-        &std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite:./data.db".into()),
+        &std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite:data.db".into()),
     )
     .await;
 
