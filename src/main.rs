@@ -45,84 +45,9 @@ async fn main() {
         .with_secure(std::env::var("PRODUCTION").is_ok())
         .with_same_site(tower_sessions::cookie::SameSite::Lax);
 
-    // Leptos config - try Cargo.toml first, fall back to environment/defaults for packaged app
-    let leptos_options = match get_configuration(Some("Cargo.toml")) {
-        Ok(conf) => {
-            let opts = &conf.leptos_options;
-            eprintln!("Loaded Leptos config from Cargo.toml");
-            eprintln!("  site_root: {:?}", opts.site_root);
-            eprintln!("  site_pkg_dir: {:?}", opts.site_pkg_dir);
-
-            // Check if pkg directory exists
-            let pkg_path = format!("{}/{}", opts.site_root, opts.site_pkg_dir);
-            if std::path::Path::new(&pkg_path).exists() {
-                eprintln!("  pkg directory FOUND at: {}", pkg_path);
-                if let Ok(entries) = std::fs::read_dir(&pkg_path) {
-                    eprintln!("  Files in pkg:");
-                    for entry in entries.flatten() {
-                        eprintln!("    {:?}", entry.path());
-                    }
-                }
-            } else {
-                eprintln!("  WARNING: pkg directory NOT found at: {}", pkg_path);
-                // List what's in site_root
-                if std::path::Path::new(&opts.site_root.to_string()).exists() {
-                    eprintln!("  Contents of site_root ({}):", opts.site_root);
-                    if let Ok(entries) = std::fs::read_dir(&opts.site_root.to_string()) {
-                        for entry in entries.flatten() {
-                            eprintln!("    {:?}", entry.path());
-                        }
-                    }
-                } else {
-                    eprintln!("  site_root directory does not exist!");
-                }
-            }
-
-            conf.leptos_options
-        }
-        Err(e) => {
-            eprintln!("Cargo.toml not found ({}), using fallback config", e);
-            // Running as packaged app - build config from env vars
-            use leptos::config::LeptosOptions;
-            use std::net::SocketAddr;
-
-            let site_root = std::env::var("LEPTOS_SITE_ROOT").unwrap_or_else(|_| "target/site".into());
-            let site_addr: SocketAddr = std::env::var("LEPTOS_SITE_ADDR")
-                .unwrap_or_else(|_| "127.0.0.1:3000".into())
-                .parse()
-                .expect("Invalid LEPTOS_SITE_ADDR");
-
-            eprintln!("Fallback config:");
-            eprintln!("  site_root: {}", site_root);
-            eprintln!("  site_addr: {}", site_addr);
-
-            // Check if site_root/pkg exists
-            let pkg_path = format!("{}/pkg", site_root);
-            if std::path::Path::new(&pkg_path).exists() {
-                eprintln!("  pkg directory found at: {}", pkg_path);
-                if let Ok(entries) = std::fs::read_dir(&pkg_path) {
-                    eprintln!("  Files in pkg:");
-                    for entry in entries.flatten() {
-                        eprintln!("    {:?}", entry.path());
-                    }
-                }
-            } else {
-                eprintln!("  WARNING: pkg directory NOT found at: {}", pkg_path);
-                // Check if files are in current directory
-                if std::path::Path::new("pkg").exists() {
-                    eprintln!("  Found pkg in current directory instead");
-                }
-            }
-
-            LeptosOptions::builder()
-                .output_name("aop")
-                .site_root(site_root)
-                .site_pkg_dir("pkg")
-                .site_addr(site_addr)
-                .reload_port(3001)
-                .build()
-        }
-    };
+    // Leptos config - use None to let Leptos find config automatically (same as ntb project)
+    let conf = get_configuration(None).expect("Failed to load Leptos configuration");
+    let leptos_options = conf.leptos_options;
     let addr = leptos_options.site_addr;
     let routes = generate_route_list(App);
 
