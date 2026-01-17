@@ -48,8 +48,36 @@ async fn main() {
     // Leptos config - try Cargo.toml first, fall back to environment/defaults for packaged app
     let leptos_options = match get_configuration(Some("Cargo.toml")) {
         Ok(conf) => {
+            let opts = &conf.leptos_options;
             eprintln!("Loaded Leptos config from Cargo.toml");
-            eprintln!("  site_root: {:?}", conf.leptos_options.site_root);
+            eprintln!("  site_root: {:?}", opts.site_root);
+            eprintln!("  site_pkg_dir: {:?}", opts.site_pkg_dir);
+
+            // Check if pkg directory exists
+            let pkg_path = format!("{}/{}", opts.site_root, opts.site_pkg_dir);
+            if std::path::Path::new(&pkg_path).exists() {
+                eprintln!("  pkg directory FOUND at: {}", pkg_path);
+                if let Ok(entries) = std::fs::read_dir(&pkg_path) {
+                    eprintln!("  Files in pkg:");
+                    for entry in entries.flatten() {
+                        eprintln!("    {:?}", entry.path());
+                    }
+                }
+            } else {
+                eprintln!("  WARNING: pkg directory NOT found at: {}", pkg_path);
+                // List what's in site_root
+                if std::path::Path::new(&opts.site_root.to_string()).exists() {
+                    eprintln!("  Contents of site_root ({}):", opts.site_root);
+                    if let Ok(entries) = std::fs::read_dir(&opts.site_root.to_string()) {
+                        for entry in entries.flatten() {
+                            eprintln!("    {:?}", entry.path());
+                        }
+                    }
+                } else {
+                    eprintln!("  site_root directory does not exist!");
+                }
+            }
+
             conf.leptos_options
         }
         Err(e) => {
