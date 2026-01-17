@@ -12,10 +12,17 @@ async fn main() {
     dotenvy::dotenv().ok();
 
     // Initialize database
-    let db = aop::db::create_pool(
-        &std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite:data.db".into()),
-    )
-    .await;
+    // Check multiple locations: env var, current dir, then target/site (oxyde.cloud workaround)
+    let db_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+        if std::path::Path::new("data.db").exists() {
+            "sqlite:data.db".into()
+        } else if std::path::Path::new("target/site/data.db").exists() {
+            "sqlite:target/site/data.db".into()
+        } else {
+            "sqlite:data.db".into()
+        }
+    });
+    let db = aop::db::create_pool(&db_url).await;
 
     // Run migrations
     aop::db::run_migrations(&db).await;
