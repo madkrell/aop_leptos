@@ -47,8 +47,13 @@ async fn main() {
 
     // Leptos config - try Cargo.toml first, fall back to environment/defaults for packaged app
     let leptos_options = match get_configuration(Some("Cargo.toml")) {
-        Ok(conf) => conf.leptos_options,
-        Err(_) => {
+        Ok(conf) => {
+            eprintln!("Loaded Leptos config from Cargo.toml");
+            eprintln!("  site_root: {:?}", conf.leptos_options.site_root);
+            conf.leptos_options
+        }
+        Err(e) => {
+            eprintln!("Cargo.toml not found ({}), using fallback config", e);
             // Running as packaged app - build config from env vars
             use leptos::config::LeptosOptions;
             use std::net::SocketAddr;
@@ -58,6 +63,28 @@ async fn main() {
                 .unwrap_or_else(|_| "127.0.0.1:3000".into())
                 .parse()
                 .expect("Invalid LEPTOS_SITE_ADDR");
+
+            eprintln!("Fallback config:");
+            eprintln!("  site_root: {}", site_root);
+            eprintln!("  site_addr: {}", site_addr);
+
+            // Check if site_root/pkg exists
+            let pkg_path = format!("{}/pkg", site_root);
+            if std::path::Path::new(&pkg_path).exists() {
+                eprintln!("  pkg directory found at: {}", pkg_path);
+                if let Ok(entries) = std::fs::read_dir(&pkg_path) {
+                    eprintln!("  Files in pkg:");
+                    for entry in entries.flatten() {
+                        eprintln!("    {:?}", entry.path());
+                    }
+                }
+            } else {
+                eprintln!("  WARNING: pkg directory NOT found at: {}", pkg_path);
+                // Check if files are in current directory
+                if std::path::Path::new("pkg").exists() {
+                    eprintln!("  Found pkg in current directory instead");
+                }
+            }
 
             LeptosOptions::builder()
                 .output_name("aop")
