@@ -48,6 +48,35 @@ async fn main() {
     // Leptos config - use None to let Leptos find config automatically (same as ntb project)
     let conf = get_configuration(None).expect("Failed to load Leptos configuration");
     let leptos_options = conf.leptos_options;
+
+    // Debug: Log site configuration
+    eprintln!("Leptos config:");
+    eprintln!("  site_root: {}", leptos_options.site_root);
+    eprintln!("  site_pkg_dir: {}", leptos_options.site_pkg_dir);
+
+    // Check if CSS file exists
+    let css_path = format!("{}/{}/aop.css", leptos_options.site_root, leptos_options.site_pkg_dir);
+    if std::path::Path::new(&css_path).exists() {
+        eprintln!("  CSS file FOUND: {}", css_path);
+    } else {
+        eprintln!("  CSS file NOT FOUND: {}", css_path);
+        // List contents of site_root
+        if let Ok(entries) = std::fs::read_dir(&leptos_options.site_root.to_string()) {
+            eprintln!("  Contents of {}:", leptos_options.site_root);
+            for entry in entries.flatten() {
+                eprintln!("    {:?}", entry.path());
+            }
+        }
+        // Check pkg dir
+        let pkg_path = format!("{}/{}", leptos_options.site_root, leptos_options.site_pkg_dir);
+        if let Ok(entries) = std::fs::read_dir(&pkg_path) {
+            eprintln!("  Contents of {}:", pkg_path);
+            for entry in entries.flatten() {
+                eprintln!("    {:?}", entry.path());
+            }
+        }
+    }
+
     let addr = leptos_options.site_addr;
     let routes = generate_route_list(App);
 
