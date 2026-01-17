@@ -100,13 +100,12 @@ ssr = [
 output-name = "aop"
 site-root = "target/site"
 site-pkg-dir = "pkg"
-style-file = "style/main.scss"
+style-file = "style/output.css"
 assets-dir = "public"
 site-addr = "127.0.0.1:3000"
 reload-port = 3001
 bin-features = ["ssr"]
 lib-features = ["hydrate"]
-sass-version = "1.97.2"
 wasm-opt-version = "version_125"
 
 [profile.release]

@@ -13,3 +13,6 @@ ArtistOilPaints.app/
 
 # App icon (local asset)
 aop.png
+
+# Tailwind CSS standalone CLI binary (download locally)
+tailwindcss
