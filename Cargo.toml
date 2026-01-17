@@ -106,10 +106,13 @@ site-addr = "127.0.0.1:3000"
 reload-port = 3001
 bin-features = ["ssr"]
 lib-features = ["hydrate"]
+sass-version = "1.97.2"
+wasm-opt-version = "version_125"
 
 [profile.release]
 lto = true
 opt-level = 3
+strip = true
 
 [profile.wasm-release]
 inherits = "release"

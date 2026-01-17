@@ -1,8 +1,10 @@
 /target
 **/*.rs.bk
 .env
-*.db
-*.db-*
+# Ignore SQLite journal/temp files but NOT data.db
+*.db-shm
+*.db-wal
+*.db-journal
 .DS_Store
 .claude/
 
