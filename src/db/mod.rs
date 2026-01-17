@@ -17,6 +17,29 @@ pub struct User {
 
 // Create connection pool
 pub async fn create_pool(url: &str) -> Db {
+    // Log current working directory for debugging
+    if let Ok(cwd) = std::env::current_dir() {
+        eprintln!("Current working directory: {:?}", cwd);
+    }
+    eprintln!("Attempting to connect to database: {}", url);
+
+    // Check if the database file exists (for sqlite: URLs)
+    if let Some(path) = url.strip_prefix("sqlite:") {
+        let path = path.trim_start_matches("./");
+        if !std::path::Path::new(path).exists() {
+            eprintln!("WARNING: Database file '{}' does not exist!", path);
+            // List files in current directory to help debug
+            if let Ok(entries) = std::fs::read_dir(".") {
+                eprintln!("Files in current directory:");
+                for entry in entries.flatten() {
+                    eprintln!("  {:?}", entry.path());
+                }
+            }
+        } else {
+            eprintln!("Database file '{}' found", path);
+        }
+    }
+
     sqlx::sqlite::SqlitePoolOptions::new()
         .max_connections(20)
         .connect(url)
