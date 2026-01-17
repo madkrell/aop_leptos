@@ -105,8 +105,10 @@ assets-dir = "public"
 site-addr = "127.0.0.1:3000"
 reload-port = 3001
 bin-features = ["ssr"]
+bin-default-features = false
 lib-features = ["hydrate"]
-wasm-opt-version = "version_125"
+lib-default-features = false
+lib-profile-release = "wasm-release"
 
 [profile.release]
 lto = true
