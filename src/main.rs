@@ -53,7 +53,7 @@ async fn main() {
             use leptos::config::LeptosOptions;
             use std::net::SocketAddr;
 
-            let site_root = std::env::var("LEPTOS_SITE_ROOT").unwrap_or_else(|_| "site".into());
+            let site_root = std::env::var("LEPTOS_SITE_ROOT").unwrap_or_else(|_| "target/site".into());
             let site_addr: SocketAddr = std::env::var("LEPTOS_SITE_ADDR")
                 .unwrap_or_else(|_| "127.0.0.1:3000".into())
                 .parse()
