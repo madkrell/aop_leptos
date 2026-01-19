@@ -12,16 +12,7 @@ async fn main() {
     dotenvy::dotenv().ok();
 
     // Initialize database
-    // Check multiple locations: env var, current dir, then target/site (oxyde.cloud workaround)
-    let db_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-        if std::path::Path::new("data.db").exists() {
-            "sqlite:data.db".into()
-        } else if std::path::Path::new("target/site/data.db").exists() {
-            "sqlite:target/site/data.db".into()
-        } else {
-            "sqlite:data.db".into()
-        }
-    });
+    let db_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite:data.db".into());
     let db = aop::db::create_pool(&db_url).await;
 
     // Run migrations
@@ -45,40 +36,9 @@ async fn main() {
         .with_secure(std::env::var("PRODUCTION").is_ok())
         .with_same_site(tower_sessions::cookie::SameSite::Lax);
 
-    // Leptos config - use None to let Leptos find config automatically (same as ntb project)
-    eprintln!("Loading Leptos configuration...");
+    // Leptos config
     let conf = get_configuration(None).expect("Failed to load Leptos configuration");
     let leptos_options = conf.leptos_options;
-    eprintln!("Leptos configuration loaded successfully");
-
-    // Debug: Log site configuration
-    eprintln!("Leptos config:");
-    eprintln!("  site_root: {}", leptos_options.site_root);
-    eprintln!("  site_pkg_dir: {}", leptos_options.site_pkg_dir);
-
-    // Check if CSS file exists
-    let css_path = format!("{}/{}/aop.css", leptos_options.site_root, leptos_options.site_pkg_dir);
-    if std::path::Path::new(&css_path).exists() {
-        eprintln!("  CSS file FOUND: {}", css_path);
-    } else {
-        eprintln!("  CSS file NOT FOUND: {}", css_path);
-        // List contents of site_root
-        if let Ok(entries) = std::fs::read_dir(&leptos_options.site_root.to_string()) {
-            eprintln!("  Contents of {}:", leptos_options.site_root);
-            for entry in entries.flatten() {
-                eprintln!("    {:?}", entry.path());
-            }
-        }
-        // Check pkg dir
-        let pkg_path = format!("{}/{}", leptos_options.site_root, leptos_options.site_pkg_dir);
-        if let Ok(entries) = std::fs::read_dir(&pkg_path) {
-            eprintln!("  Contents of {}:", pkg_path);
-            for entry in entries.flatten() {
-                eprintln!("    {:?}", entry.path());
-            }
-        }
-    }
-
     let addr = leptos_options.site_addr;
     let routes = generate_route_list(App);
 
