@@ -15,13 +15,44 @@ pub struct User {
     pub locked_until: Option<String>,
 }
 
-// Create connection pool
+// Create connection pool - tries multiple paths for database file
 pub async fn create_pool(url: &str) -> Db {
-    sqlx::sqlite::SqlitePoolOptions::new()
-        .max_connections(20)
-        .connect(url)
-        .await
-        .expect("Failed to connect to database")
+    // List of paths to try (in order of preference)
+    let paths_to_try = [
+        url.to_string(),
+        "sqlite:data.db".to_string(),
+        "sqlite:./data.db".to_string(),
+        "sqlite:target/site/data.db".to_string(),
+    ];
+
+    for db_url in &paths_to_try {
+        // Extract path from sqlite: URL
+        if let Some(path) = db_url.strip_prefix("sqlite:") {
+            let path = path.trim_start_matches("./");
+            if std::path::Path::new(path).exists() {
+                println!("Found database at: {}", path);
+                return sqlx::sqlite::SqlitePoolOptions::new()
+                    .max_connections(20)
+                    .connect(db_url)
+                    .await
+                    .expect("Failed to connect to database");
+            }
+        }
+    }
+
+    // If no file found, print debug info and panic
+    eprintln!("ERROR: Could not find database file!");
+    eprintln!("Tried paths: {:?}", paths_to_try);
+    if let Ok(cwd) = std::env::current_dir() {
+        eprintln!("Current working directory: {:?}", cwd);
+    }
+    if let Ok(entries) = std::fs::read_dir(".") {
+        eprintln!("Files in current directory:");
+        for entry in entries.flatten() {
+            eprintln!("  {:?}", entry.path());
+        }
+    }
+    panic!("Database file not found");
 }
 
 // Run migrations (create tables if not exist)
