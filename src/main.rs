@@ -11,7 +11,7 @@ async fn main() {
     // Load env vars
     dotenvy::dotenv().ok();
 
-    // Initialize database
+    // Initialize database // in oxyde.cloud for production use the oxyde.cloud.toml file
     let db_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite:data.db".into());
     let db = aop::db::create_pool(&db_url).await;
 
