@@ -209,6 +209,12 @@
   }
 
   /* App pages common styles */
+  .settings-page,
+  .target-mix-page,
+  .test-mix-page {
+    @apply px-8 py-6;
+  }
+
   .settings-page h1,
   .target-mix-page h1,
   .test-mix-page h1 {
